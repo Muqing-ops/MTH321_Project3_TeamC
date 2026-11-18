@@ -1,0 +1,29 @@
+{
+  "revision": "Group C reference style and confirmed six-member roster",
+  "pdf_checks": [
+    {
+      "path": "report/report.pdf",
+      "pages": 28,
+      "all_six_members_present": true,
+      "outside_page_words": []
+    },
+    {
+      "path": "presentation/presentation.pdf",
+      "pages": 17,
+      "all_six_members_present": true,
+      "outside_page_words": []
+    },
+    {
+      "path": "docs/PROBLEM_DEFINITION_SHEET.pdf",
+      "pages": 1,
+      "all_six_members_present": true,
+      "outside_page_words": []
+    }
+  ],
+  "numerical_csv_hashes_unchanged": 16,
+  "named_ics_forms": 6,
+  "latex_overflow": false,
+  "undefined_references": false,
+  "contributions": "Pending actual Project 3 evidence; identity fields confirmed",
+  "original_references_unchanged": true
+}

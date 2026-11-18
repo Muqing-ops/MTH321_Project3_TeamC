@@ -1,0 +1,36 @@
+{
+  "group": "Group C",
+  "members": [
+    {
+      "name": "Chuqiao Tang",
+      "student_id": "2360692"
+    },
+    {
+      "name": "Jinyu Ma",
+      "student_id": "2363433"
+    },
+    {
+      "name": "Muqing Xu",
+      "student_id": "2362900"
+    },
+    {
+      "name": "Shuoran Fu",
+      "student_id": "2362626"
+    },
+    {
+      "name": "Taiqi Zhang",
+      "student_id": "2363684"
+    },
+    {
+      "name": "Yujia Ding",
+      "student_id": "2362094"
+    }
+  ],
+  "source_documents": [
+    "/Users/shuoran/Desktop/Group C.pdf",
+    "/Users/shuoran/Desktop/Team C.pdf"
+  ],
+  "confirmed_by_user": true,
+  "roles": "pending actual Project 3 assignments",
+  "contributions": "pending actual Project 3 evidence"
+}

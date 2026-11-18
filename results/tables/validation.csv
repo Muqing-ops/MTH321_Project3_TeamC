@@ -1,0 +1,26 @@
+ID,expected,actual,tolerance,status,evidence
+V01,all automated checks pass,77 passed in 0.13s,0,PASS,tests/test_numerics.py; results/raw/pytest.log
+V02,all discrete masses conserved,1.7763568394002506e-16,5e-12,PASS,diagnostic_history.csv
+V03-mc,maximum TV increment <= tolerance,8.881784197001252e-16,5e-12,PASS,diagnostic_history.csv (three profiles and Courant numbers)
+V04-mc,"nonnegative packet/square remain in [0,1]",0,5e-12,PASS,diagnostic_history.csv
+V03-minmod,maximum TV increment <= tolerance,8.881784197001252e-16,5e-12,PASS,diagnostic_history.csv (three profiles and Courant numbers)
+V04-minmod,"nonnegative packet/square remain in [0,1]",0,5e-12,PASS,diagnostic_history.csv
+V05-upwind,measured mode agrees with analytic G^100,6.596257219332524e-15,5e-12,PASS,fourier_modes.csv
+V06-upwind-sine,spatial order 1,0.9982138921215766,0.1,PASS,spatial_separated.csv; exact semidiscrete time evolution
+V06-upwind-packet,spatial order 1,0.9575161390228741,0.1,PASS,spatial_separated.csv; exact semidiscrete time evolution
+V07-upwind,time order 1 vs C->0 same-grid limit,1.0001255374502465,0.1,PASS,temporal_separated.csv
+V05-lw,measured mode agrees with analytic G^100,9.34303963083549e-15,5e-12,PASS,fourier_modes.csv
+V06-lw-sine,spatial order 2,1.9999866510664637,0.1,PASS,spatial_separated.csv; exact semidiscrete time evolution
+V06-lw-packet,spatial order 2,1.999516541903285,0.1,PASS,spatial_separated.csv; exact semidiscrete time evolution
+V07-lw,time order 1 vs C->0 same-grid limit,1.0556222601561338,0.1,PASS,temporal_separated.csv
+V08,checkerboard signed first factors match,4.440892098500626e-16,2e-13,PASS,stability_summary.csv
+V09-upwind,growth above sharp CFL limit,380.2345080615358,>1,PASS,stability_summary.csv
+V09-lw,growth above sharp CFL limit,136475.5432262472,>1,PASS,stability_summary.csv
+V10,nonlinear oracle tolerance change <1% measured error,7.896898471152782e-05,0.01,PASS,nonlinear_oracle_checks.csv; spatial_separated.csv; temporal_separated.csv
+V11,dense matrix expm matches independent FFT reference,5.551115123125783e-16,2e-13,PASS,matrix_oracle_crosscheck.csv
+V12-upwind,independent scalar-loop reproduction,0.0,2e-13,PASS,experiments/validate.py
+V13-upwind,same-process deterministic rerun,0.0,0,PASS,experiments/validate.py
+V12-lw,independent scalar-loop reproduction,2.220446049250313e-16,2e-13,PASS,experiments/validate.py
+V13-lw,same-process deterministic rerun,0.0,0,PASS,experiments/validate.py
+V12-mc,independent scalar-loop reproduction,0.0,2e-13,PASS,experiments/validate.py
+V13-mc,same-process deterministic rerun,0.0,0,PASS,experiments/validate.py
