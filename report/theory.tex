@@ -1,0 +1,238 @@
+\section{Introduction and research question}
+A periodic transport problem provides a controlled test of numerical trustworthiness: the exact evolution translates every profile without changing its amplitude, shape, integral or total variation. Consequently a change in any of these quantities has a numerical explanation. Smooth and discontinuous data expose different defects, and a visually attractive solution can fail a quantitative diagnostic.
+
+The central question is: \emph{How do numerical advection schemes balance accuracy, numerical dissipation, dispersive oscillations, and computational cost for smooth and discontinuous initial data?} The verified baseline consists of upwind and Lax--Wendroff. The two-star extension is a conservative flux-limited method with the monotonized central (MC) limiter. Minmod provides a limited sensitivity comparison. The intended contribution is an evidence chain connecting derivations, falsifiable tests, separated error studies and cost at matched error targets. No new scheme or general theorem is claimed.
+
+The Brief requires a reproducible evidence chain and the analysis worksheet requires quantitative modal tests \cite{brief,worksheet}. The course problem pack explicitly identifies this transport route and TVD extension \cite{pack}. Our scope is the synthetic periodic benchmark, rather than a data-based case in the authentic-situation pack. The latter's observation-source and question-memo requirements apply to teams choosing those cases. No river, traffic or other real-world predictive claim follows from this experiment.
+
+\section{Mathematical problem formulation}
+\label{sec:model}
+We solve
+\begin{equation}\label{eq:pde}
+ u_t+a u_x=0,\qquad x\in\mathbb T=\mathbb R/\mathbb Z,\quad 0\le t\le T,\qquad a=1,
+\end{equation}
+with initial data $u(x,0)=u_0(x)$ and periodic boundary identification. The nondimensional length is one and the baseline transit time is one. If dimensional length and speed are $L$ and $a_*$, take $x=x_*/L$ and $t=a_*t_*/L$; $u$ is a normalized transported scalar. Production experiments use positive speed. Negative-speed reflection is additionally tested in the implementation.
+
+Along a characteristic $x=x_0+at$, $d u(x(t),t)/dt=u_t+a u_x=0$. Thus
+\begin{equation}\label{eq:exact} u(x,t)=u_0((x-at)\bmod 1).\end{equation}
+Translation is an isometry in every $L^p(\mathbb T)$, giving existence, uniqueness and continuous dependence for the corresponding initial data. Smooth data give a classical solution; the square pulse gives a transported weak solution. It remains discontinuous, with no physical diffusion. Integrating \eqref{eq:pde} cancels the periodic boundary flux and preserves mass. Translation also preserves continuous total variation.
+
+Three initial conditions have distinct purposes:
+\begin{align}
+ u_0^{\rm sin}(x)&=\sin(2\pi kx),\quad k=1\ \hbox{unless specified},\\
+ u_0^{\rm pkt}(x)&=\exp[-10(1-\cos 2\pi x)],\\
+ u_0^{\rm sq}(x)&=\mathbf1_{[1/4,\,1/2)}(x).
+\end{align}
+The packet is $C^\infty$ on the circle, including its maximum at the seam. The square equals one at its rising jump and zero at its falling jump. This pointwise convention has no effect on an $L^1$ weak solution, but does affect a discrete maximum norm. We construct its reference by evaluating the same half-open definition at the shifted coordinates, without interpolating or averaging.
+
+Set $h=1/N$, $x_j=jh$, $j=0,\ldots,N-1$, and $t_n=n\Delta t$. Store \emph{grid point values} $U_j^n\approx u(x_j,t_n)$, never a duplicate $x=1$ endpoint. Every subscript is modulo $N$. In particular $U_{-1}=U_{N-1}$ and $U_N=U_0$. Although a flux form is used, no claim that these arrays are exact cell averages is made. The conserved discrete mass $h\sum U_j$ is a quadrature of the continuous integral; for a coarse sampled square it need not equal its continuum mass exactly.
+
+For a requested maximum Courant number $C_*$, choose $m=\lceil |a|TN/C_*\rceil$ (at least one), reset $\Delta t=T/m$, and record the actual $C=a\Delta t/h$. All executed steps are uniform. Therefore the final time is prescribed without a shortened final step. Cases labelled with a requested $C$ can have a slightly smaller actual value, especially on odd step counts. The stability stress test instead prescribes $C$ and a maximum number of steps.
+
+The quantities of interest are the error norms, amplitude and phase, extrema, mass, total variation, transition width, and computational cost to meet an error target. The modelling error relative to any physical transport system is outside scope. Errors measured against \eqref{eq:exact} are numerical errors for this mathematical model.
+
+\section{Numerical methods derived from the PDE}
+\subsection{First-order upwind}
+For $a>0$, characteristics enter from the left. Taylor expansion gives
+\begin{align*}
+ u_t(x_j,t_n)&=\frac{u(x_j,t_{n+1})-u(x_j,t_n)}{\Delta t}+O(\Delta t),\\
+ u_x(x_j,t_n)&=\frac{u(x_j,t_n)-u(x_{j-1},t_n)}h+O(h).
+\end{align*}
+Substitution into \eqref{eq:pde} gives
+\begin{equation}\label{eq:up}
+ U_j^{n+1}=U_j^n-C(U_j^n-U_{j-1}^n)=(1-C)U_j^n+C U_{j-1}^n.
+\end{equation}
+Its flux is $F_{j+1/2}=aU_j$. Periodic neighbours enforce the boundary condition in each update. It is a one-step method, so initial sampling is the complete start-up. For $a<0$ use $U_j^{n+1}=U_j^n-C(U_{j+1}^n-U_j^n)$ with the signed $C$.
+
+Inserting a smooth exact solution into the normalized discrete equation yields
+\begin{equation}
+ \tau=\frac{\Delta t}{2}u_{tt}-\frac{ah}{2}u_{xx}
+       +\frac{\Delta t^2}{6}u_{ttt}+\frac{ah^2}{6}u_{xxx}+\cdots.
+\end{equation}
+Using $u_{tt}=a^2u_{xx}$ and $u_{ttt}=-a^3u_{xxx}$, the leading residual is $-ah(1-C)u_{xx}/2$. The scheme is consistent of first order under hyperbolic refinement. Stability plus regularity gives first-order smooth-solution convergence at fixed interior CFL. At $C=1$ its leading errors cancel because the full update becomes an exact represented shift.
+
+A modified equation must account for the perturbed evolution when eliminating temporal derivatives. Equivalently expand $\log G/\Delta t$, giving
+\begin{equation}\label{eq:modup}
+ u_t+a u_x=\frac{ah}{2}(1-C)u_{xx}
+ -\frac{ah^2}{6}(1-C)(1-2C)u_{xxx}+O(h^3).
+\end{equation}
+The nonnegative leading diffusion coefficient for $0\le C\le1$ explains smearing and amplitude loss. It is artificial: the original PDE has none. The third derivative changes phase and vanishes at $C=1/2$. This expansion is a long-wave, smooth-data statement, not a valid pointwise description of a jump.
+
+For $0\le C\le1$, \eqref{eq:up} is a convex combination. Hence it obeys a maximum principle and is order-preserving as a map of data. Summation of its flux differences proves discrete mass conservation. Conservation alone supplies no error or stability bound.
+
+\subsection{Lax--Wendroff}
+Taylor-expand the exact solution at a fixed position:
+\begin{equation}
+ u(x,t+\Delta t)=u+\Delta t u_t+\tfrac12\Delta t^2u_{tt}+O(\Delta t^3).
+\end{equation}
+The PDE implies $u_t=-a u_x$ and $u_{tt}=-a(u_t)_x=a^2u_{xx}$. Approximate these derivatives by the centered first and second differences. This gives
+\begin{equation}\label{eq:lw}
+ U_j^{n+1}=U_j^n-\frac C2(U_{j+1}^n-U_{j-1}^n)
+ +\frac{C^2}{2}(U_{j+1}^n-2U_j^n+U_{j-1}^n).
+\end{equation}
+Again all indices wrap periodically and initial sampling starts the one-step evolution. The same formula works for either sign of $a$.
+
+The normalized smooth residual has leading term
+\begin{equation}
+ \tau=\frac{a}{6}(h^2-a^2\Delta t^2)u_{xxx}
+ +O(\Delta t^3+\Delta t h^2+h^4).
+\end{equation}
+Thus it is second-order consistent on $\Delta t=O(h)$ families and converges at second order for smooth solutions under its stable CFL restriction. Its long-wave modified equation is
+\begin{equation}\label{eq:modlw}
+ u_t+a u_x=-\frac{ah^2}{6}(1-C^2)u_{xxx}
+ -\frac{aCh^3}{8}(1-C^2)u_{xxxx}+O(h^4).
+\end{equation}
+The leading odd derivative explains dispersion; the negative fourth-derivative coefficient gives weaker, higher-order damping. Second-order smooth accuracy does not imply a maximum principle. In fact the right-neighbour coefficient $(C^2-C)/2$ is negative for $0<C<1$. At a jump, its cancellation can create overshoot or undershoot. This is compatible with discrete $L^2$ stability.
+
+Write \eqref{eq:lw} in conservative form with
+\begin{equation}\label{eq:lwflux}
+ F^{H}_{j+1/2}=\frac a2(U_j+U_{j+1})-\frac{aC}{2}(U_{j+1}-U_j)
+ =aU_j+\frac a2(1-C)(U_{j+1}-U_j).
+\end{equation}
+Then $U_j^{n+1}=U_j^n-(\Delta t/h)(F^H_{j+1/2}-F^H_{j-1/2})$. Summing over a full periodic grid telescopes exactly.
+
+\subsection{Flux limitation and choice of limiter}
+The extra term in \eqref{eq:lwflux} removes part of upwind's diffusion. We retain only a data-dependent part of that correction. Define
+\begin{equation}
+ d_j=U_j-U_{j-1},\quad r_j=\frac{d_j}{d_{j+1}},\quad
+ s_j=\phi(r_j)d_{j+1},\quad
+ F_{j+1/2}=a\left[U_j+\tfrac12(1-C)s_j\right].
+\end{equation}
+The complete update is
+\begin{equation}\label{eq:tvd}
+ U_j^{n+1}=U_j-Cd_j-\tfrac12 C(1-C)(s_j-s_{j-1}).
+\end{equation}
+Setting $\phi=0$ recovers upwind and setting $\phi=1$ recovers Lax--Wendroff. The two limiters used are
+\begin{align}
+ \phi_{\rm mm}(r)&=\max(0,\min(1,r)),\\
+ \phi_{\rm MC}(r)&=\max(0,\min(2r,(1+r)/2,2)).\label{eq:mc}
+\end{align}
+MC is primary because it uses a central slope near $r=1$ and is less restrictive than Minmod in monotone smooth regions. Minmod checks the dissipation cost of more aggressive limiting. This is a targeted sensitivity study, rather than an attempt to maximize method count. The local textbook source gives the flux form and the applicable limiter constraints \cite[Secs.~6.11--6.12]{leveque}. Sweby's primary paper develops the fully discrete antidiffusive-flux construction \cite{sweby}.
+
+There is no denominator regularization constant. If $d_{j+1}=0$ the limited product is zero. Otherwise the code evaluates the equivalent signed minimum:
+\begin{equation}\label{eq:slope}
+ s_j=\begin{cases}
+ \operatorname{sign}(d_{j+1})\min(2|d_j|,|d_j+d_{j+1}|/2,2|d_{j+1}|),&d_jd_{j+1}>0,\\
+ 0,&d_jd_{j+1}\le0
+ \end{cases}
+\end{equation}
+for MC. Minmod uses $\min(|d_j|,|d_{j+1}|)$ instead. This treats $0/0$ as a zero correction and avoids overflow or arbitrary epsilon bias in ratios. Each interface flux is shared by its two neighbours, including the seam, so mass conservation follows by the same telescoping proof.
+
+\subsection{A TVD proof for this precise update}
+\label{sec:tvdproof}
+Discrete periodic total variation is
+\begin{equation}
+ \operatorname{TV}(U)=\sum_{j=0}^{N-1}|U_{j+1}-U_j|=\sum_j|d_j|.
+\end{equation}
+TVD means $\operatorname{TV}(U^{n+1})\le\operatorname{TV}(U^n)$ for every step in the specified regime. It prevents growth of this measure of oscillation; it does not minimize an error norm.
+
+Both chosen limiters satisfy $\phi(r)=0$ for $r\le0$, and $0\le\phi(r)\le\min(2r,2)$ for $r>0$. Where $d_j\ne0$, write \eqref{eq:tvd} as
+\begin{equation}
+ U_j^{n+1}=U_j-A_jd_j,\quad
+ A_j=C+\tfrac12C(1-C)\left(\frac{s_j}{d_j}-\frac{s_{j-1}}{d_j}\right).
+\end{equation}
+The bounds give $s_j/d_j\in[0,2]$ and $s_{j-1}/d_j\in[0,2]$. Therefore
+\begin{equation}
+ C^2\le A_j\le2C-C^2\le1\qquad(0\le C\le1).
+\end{equation}
+If $d_j=0$, both adjacent limited corrections vanish and the associated coefficient can be any value in $[0,1]$. Thus $U_j^{n+1}=(1-A_j)U_j+A_j U_{j-1}$, which also proves an extrema bound. Taking adjacent differences yields
+\begin{equation}
+ d_j^{n+1}=(1-A_j)d_j+A_{j-1}d_{j-1}.
+\end{equation}
+The triangle inequality and periodic reindexing give
+\begin{equation}
+ \sum_j|d_j^{n+1}|\le\sum_j[(1-A_j)|d_j|+A_{j-1}|d_{j-1}|]=\sum_j|d_j|.
+\end{equation}
+This proof uses the full nonlinear update and the specific $(1-C)$ correction. It is valid for a scalar constant positive speed, uniform periodic grid, forward explicit update and $0\le C\le1$. Reflection gives the negative-speed result. It is not a theorem for arbitrary reconstructions, variable speeds, other time integrators or systems. A Sweby diagram alone would leave these hypotheses unchecked.
+
+The data-dependent convex representation proves an extrema bound for each state. It does not by itself prove order preservation of the entire nonlinear mapping when comparing two different input vectors. This distinction matters when using the word ``monotone.'' A linear monotone method cannot exceed first-order general accuracy; nonlinear limitation preserves higher accuracy in smooth monotone regions but switches near extrema. There $r$ can be negative and the correction vanishes, causing local order reduction. We consequently measure global orders rather than assigning MC a universal second-order rate.
+
+\section{Stability and numerical fidelity}
+\subsection{Why Fourier analysis applies to the baselines}
+The coefficients are constant, the grid is uniform and periodic, and both baseline updates are linear and translation invariant. Their matrices are circulant and diagonalized by the discrete Fourier transform. The admissible angles are $\xi_\ell=2\pi\ell/N$, represented in $[-\pi,\pi]$. Parseval's identity converts a uniform modal modulus bound into a discrete $L^2$ contraction. No unanalysed nonperiodic boundary row is present. The nonlinear TVD update mixes Fourier modes, so this argument does not prove its global stability.
+
+Substitute $U_j^n=G(\xi)^n e^{ij\xi}$ into \eqref{eq:up}, divide out $G^ne^{ij\xi}$, and use $U_{j-1}=e^{-i\xi}U_j$:
+\begin{align}
+ G_{\rm up}&=1-C+Ce^{-i\xi}=1-C(1-\cos\xi)-iC\sin\xi,\\
+ |G_{\rm up}|^2&=(1-C+C\cos\xi)^2+C^2\sin^2\xi\\
+ &=1-4C(1-C)\sin^2(\xi/2).\label{eq:gup}
+\end{align}
+Consequently every mode has modulus at most one for $0\le C\le1$. Outside this interval any nonzero angle has modulus greater than one for this left-biased stencil. On the even grids tested, $\xi=\pi$ is admissible and $G(\pi)=1-2C$ gives a direct boundary challenge. For the sign-corrected negative-speed stencil the condition is $|C|\le1$.
+
+For \eqref{eq:lw}, the same substitution gives
+\begin{align}
+ G_{\rm LW}&=1-\tfrac C2(e^{i\xi}-e^{-i\xi})+\tfrac{C^2}{2}(e^{i\xi}-2+e^{-i\xi})\\
+ &=1-iC\sin\xi-2C^2\sin^2(\xi/2),\\
+ |G_{\rm LW}|^2&=[1-2C^2\sin^2(\xi/2)]^2+C^2\sin^2\xi\\
+ &=1-4C^2(1-C^2)\sin^4(\xi/2).\label{eq:glw}
+\end{align}
+This proves contraction for $|C|\le1$ and modal growth outside that interval. Under fixed nonzero unstable CFL and refinement on a fixed physical interval, repeated high-mode growth becomes unbounded, which is the relevant instability claim. A finite run merely checks the prediction; it does not constitute the proof.
+
+The exact one-step factor is $G_{\rm ex}=e^{-iC\xi}$. Write $G=|G|e^{i\vartheta}$ and choose a phase branch continuously from zero where $G\ne0$. Amplitude after $m$ steps is multiplied by $|G|^m$ and phase changes by $m\vartheta$. Numerical phase speed on a resolved branch is $a_{\rm num}=-\vartheta/(\kappa\Delta t)$, where $\kappa=\xi/h$. At zero amplitude, phase is undefined; near roundoff it is unreliable.
+
+For $\xi\to0$ at fixed $0<C<1$,
+\begin{align}
+ 1-|G_{\rm up}|&=\tfrac12 C(1-C)\xi^2+O(\xi^4),\\
+ 1-|G_{\rm LW}|&=\tfrac18 C^2(1-C^2)\xi^4+O(\xi^6),\\
+ \arg G_{\rm up}+C\xi&=\tfrac16 C(1-C)(1-2C)\xi^3+O(\xi^5),\\
+ \arg G_{\rm LW}+C\xi&=\tfrac16 C(1-C^2)\xi^3+O(\xi^5).
+\end{align}
+LW damps sufficiently resolved modes less, but this is not a pointwise ordering at every wave number and CFL. The magnitude curves can cross at high frequency. Upwind at $C=1/2$ has $G=e^{-i\xi/2}\cos(\xi/2)$, giving exact resolved-branch phase for $|\xi|<\pi$ while still damping amplitude. At $C=1$, both schemes have $G=e^{-i\xi}$ and the update is precisely one represented cell shift. This requires full uniform steps and clean wrap-around, and does not justify an arbitrary-time interpolation.
+
+\subsection{Terms that answer different questions}
+\begin{description}[style=nextline]
+\item[Consistency] The normalized local residual tends to zero for sufficiently smooth exact data.
+\item[Stability] Discrete propagation bounds perturbations uniformly over a declared mesh family and finite physical interval.
+\item[Convergence] The error against the mathematical solution tends to zero in a stated norm under refinement.
+\item[Accuracy] The magnitude or rate of an error for a specified quantity, configuration and reference.
+\item[Numerical fidelity] Reproduction of selected features such as wave speed, extrema, amplitude or shape.
+\item[Conservation] An exact or approximate discrete balance for an integral quantity.
+\item[Monotonicity] Here, order preservation of a full update map with respect to its input values. A maximum principle is related but is not a substitute definition.
+\item[TVD] Nonincrease of discrete total variation, with the periodic seam included.
+\end{description}
+The Lax equivalence theorem links consistency, stability and convergence in its well-posed linear setting; it does not replace quantitative accuracy evidence, nor automatically prove a nonlinear limiter theorem. Stable dispersive oscillations and genuine exponentially growing unstable modes require different diagnoses.
+
+\section{Experimental design and verification}
+\label{sec:design}
+The preregistered \texttt{EXPERIMENT\_PROTOCOL.md} and \texttt{config/protocol.json} predate formal results. Eight experiment families cover basic verification, separated refinements, the CFL boundary, a square pulse, modal fidelity, mass/TV histories, long-time evolution, and matched-accuracy cost. Production grids are $N=50,100,200,400,800$, with additional cost grids through 3200. Main comparisons use requested $C=0.5$; sensitivity uses 0.25 and 0.9. No random production data are used. The randomized TVD unit checks use seed 3212026.
+
+For pointwise error $e_j=U_j-u(x_j,T)$, use
+\begin{equation}
+ E_1=h\sum_j|e_j|,\quad E_2=\left(h\sum_j e_j^2\right)^{1/2},\quad E_\infty=\max_j|e_j|.
+\end{equation}
+Measure $M=h\sum U_j$, periodic TV, extrema, overshoot $\max(0,\max U-1)$, undershoot $\max(0,-\min U)$, and the count of nodes with $0.1<U<0.9$. The last count includes both fronts; multiplication by $h$ is an aggregate physical transition width. For oscillatory LW it can also count intermediate values in ripples, so it is a descriptive threshold measure rather than a unique geometric front width. Smooth sine amplitude and phase use the discrete coefficient $N^{-1}\sum U_j e^{-2\pi i k j/N}$. Phase histories are unwrapped at every step to avoid confusing periodic return times with zero drift. For a limited sine, we also record energy outside the original mode as a harmonic residual.
+
+\subsection{Separated space and time studies}
+Define the small-step spatial operators
+\begin{equation}
+ (A_-U)_j=-a(U_j-U_{j-1})/h,\qquad
+ (A_0U)_j=-a(U_{j+1}-U_{j-1})/(2h).
+\end{equation}
+The exact semidiscrete reference for upwind is $e^{TA_-}U^0$, and that for LW's $\Delta t\to0$ limit is $e^{TA_0}U^0$. FFT symbols are $-a(1-e^{-i\xi})/h$ and $-ia\sin\xi/h$. For spatial error compare these exact-in-time arrays with the PDE samples, separately on every grid. This removes time stepping completely. A dense \texttt{scipy.linalg.expm} calculation on $N=24$ cross-checks the FFT construction independently.
+
+For temporal error fix $N=100$, $T=0.1$, sine initial samples, and $m=40,80,\ldots,1280$. Compare the actual finite-step solution with its same-grid small-step limit. The upwind update is forward Euler for $A_-$, so its temporal order is one. Classical LW is
+\begin{equation}\label{eq:lwtime}
+ B(\Delta t)=I+\Delta t A_0+\tfrac12a^2\Delta t^2D_2,
+\end{equation}
+where $D_2$ is the three-point second derivative. In contrast,
+\begin{equation}
+ e^{\Delta t A_0}=I+\Delta t A_0+\tfrac12\Delta t^2 A_0^2+O(\Delta t^3).
+\end{equation}
+Because $a^2D_2\ne A_0^2$ at a fixed grid, the local difference is $O(\Delta t^2)$ and the accumulated error is generically first order in $\Delta t$ relative to this semidiscrete object. In a Fourier mode,
+\begin{equation}
+ a^2D_2-A_0^2=-\frac{4a^2}{h^2}\sin^4(\xi/2),
+\end{equation}
+which is nonzero for nonconstant resolved modes. The term is small for long waves, so a pre-asymptotic second-order contribution can obscure the eventual first-order regime. This does not contradict second-order PDE convergence under joint hyperbolic refinement. We explicitly label the $C=0.5$ grid refinement as \emph{joint}, rather than using it to assert separated time or space orders.
+
+For MC, the limiting spatial ODE is $U'=L_{h,0}(U)$ obtained by setting $C=0$ in the flux before taking its difference. The fully discrete update is $U+\Delta t L_{h,C}(U)$, where $L_{h,C}$ itself depends on $\Delta t/h$. This couples the spatial reconstruction and time correction. We approximate the limiting ODE with \texttt{scipy.integrate.solve\_ivp}, method DOP853, at relative tolerances $2\times10^{-11}$ and $2\times10^{-13}$ and absolute tolerances one hundredth as large. These are reference integrations, not black-box PDE solves in the production method. Min/max slope functions are continuous and piecewise linear, hence this finite-dimensional ODE is Lipschitz but not globally smooth. A nominal eighth-order solver does not guarantee its nominal order across switches.
+
+We use the tighter solution as reference and report the difference between tolerances as an empirical uncertainty check. The acceptance threshold is 1\% of the measured error. This conditional separation studies the declared limiting spatial operator and its finite-step discrepancy; it is not an exact universal additive split of nonlinear PDE error. MC rates remain empirical. The PDE error and spatial floor accompany every temporal row so that cancellation against the wrong reference cannot be mistaken for order.
+
+\subsection{Tests capable of failing}
+The unit suite checks constant states, both shift directions, the seam, signed-speed reflection, analytic complex-mode factors, mass, invalid arguments, zero denominators and smooth joint order. A hand-checkable periodic input is $U=[0,1,2,0]$, $C=1/2$. Upwind gives $[0,1/2,3/2,1]$. LW weights are $(3/8,3/4,-1/8)$ for left, center and right, giving $[-1/8,1/2,15/8,3/4]$. MC and Minmod both give limited jumps $[0,1,0,0]$, dimensionless fluxes $[0,5/4,2,0]$, and output $[0,3/8,13/8,1]$. Each output sums to three. These calculations are explicit agent checks; no student hand verification is asserted.
+
+The first pytest run exposed two incorrect AI-entered expected vectors for LW and MC. Recomputing the stencil weights and limited fluxes corrected the test expectations without changing the numerical update. The original expectations, failures and correction remain in \texttt{docs/FAILURE\_HISTORY.md}. The first experiment invocation also ended with an import error because the validation module had not yet been written. Experiment outputs had completed. The module was added, validation ran explicitly, and the complete entry point was rerun. This software integration failure is recorded separately from a numerical failure.
+
+CFL tests use the represented checkerboard $(-1)^j$ on $N=100$, not a low sine that could miss growth. The default production driver rejects $C>1$. Only the explicitly named stress loop bypasses the guard, stops at 300 steps or $\max|U|>10^6$, and records its stopping reason. For limited checkerboard data, all corrections vanish and the update reduces to upwind; this single-mode observation is not a proof of nonlinear stability for other data.
+
+All three main methods are implemented as explicit NumPy updates corresponding to the displayed formulas. NumPy rolls implement periodic neighbours; FFT, matrix exponentials and DOP853 construct references only. Matplotlib renders the measured data. No black-box PDE solver supplies the production results.

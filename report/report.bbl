@@ -1,0 +1,29 @@
+\begin{thebibliography}{1}
+
+\bibitem{leveque}
+Randall~J. LeVeque.
+\newblock {\em Finite Volume Methods for Hyperbolic Problems}.
+\newblock Cambridge University Press, 2002.
+
+\bibitem{brief}
+{MTH321 teaching team}.
+\newblock Project 3 brief: Pde initial-boundary value problems, 2026.
+\newblock Local official course material, pp. 1--4.
+
+\bibitem{pack}
+{MTH321 teaching team}.
+\newblock Project 3 problem pack: Pde initial-boundary value problems, 2026.
+\newblock Periodic advection and depth directions, pp. 1--3.
+
+\bibitem{worksheet}
+{MTH321 teaching team}.
+\newblock Von neumann analysis worksheet, 2026.
+\newblock Local course worksheet, pp. 2--3.
+
+\bibitem{sweby}
+P.~K. Sweby.
+\newblock High resolution schemes using flux limiters for hyperbolic
+  conservation laws.
+\newblock {\em SIAM Journal on Numerical Analysis}, 21(5):995--1011, 1984.
+
+\end{thebibliography}
