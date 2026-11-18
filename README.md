@@ -2,7 +2,6 @@
 
 Group C: Chuqiao Tang (2360692), Jinyu Ma (2363433), Muqing Xu (2362900), Shuoran Fu (2362626), Taiqi Zhang (2363684), Yujia Ding (2362094).
 
-Executed AI-assisted reference study, 2026-11-18. All production results come from explicit derived NumPy updates. Actual student contribution, peer-review, forum and clean-room records remain pending. No grade guarantee.
 
 ## Quick start
 Use Python 3.12 or newer (tested interpreter and versions are recorded in results/raw/environment.json).
