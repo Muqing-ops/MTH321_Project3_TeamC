@@ -37,5 +37,3 @@ Separated spatial studies use exact-in-time limiting spatial operators; separate
 ## Submission status
 The local pack lacks the shared full rubric, official LaTeX template, official presentation duration and current module-homepage checklist. Tutorial13 gives a report length of at least eight pages. Brief says Monday Week15 23:59, lecture5 says Week14: Brief takes precedence here, but check the live course calendar. Actual repository invitations, commit history, milestone posts and completed ICS are not supplied or fabricated. Do not submit blank ICS as completed statements. No files in other projects or official source files were modified.
 
-## User-confirmed reference style and roster
-The current report and presentation follow the supplied Group C Project 2 examples for cover/header style and evidence presentation. config/team.json records the six confirmed names and IDs. Each has a named Project 3 ICS form in docs/ics/ and the report appendix, with actual role/contribution fields pending. See docs/reference_style/ALIGNMENT.md. The supplied examples are not a new grading rubric.
